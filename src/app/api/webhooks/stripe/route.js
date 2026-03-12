@@ -1,24 +1,28 @@
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
-import { stripe, createCheckoutSession } from "@/lib/stripe";
+import { stripe as getStripe, createCheckoutSession } from "@/lib/stripe";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
 
-// Webhook handler — receives events from Stripe
 export async function POST(request) {
+  // If Stripe isn't configured, return early
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return NextResponse.json({ error: "Stripe is not configured yet." }, { status: 503 });
+  }
+
   const body = await request.text();
   const headersList = headers();
 
-  // Check if this is a checkout creation request (from our frontend)
   const contentType = headersList.get("content-type");
   if (contentType === "application/json") {
     return handleCheckoutRequest(body);
   }
 
-  // Otherwise, it's a Stripe webhook
   const sig = headersList.get("stripe-signature");
   if (!sig) {
     return NextResponse.json({ error: "No signature" }, { status: 400 });
   }
+
+  const stripe = getStripe();
 
   let event;
   try {
@@ -49,7 +53,6 @@ export async function POST(request) {
     case "customer.subscription.updated": {
       const subscription = event.data.object;
       const status = subscription.status === "active" ? "active" : "past_due";
-
       await supabase
         .from("profiles")
         .update({ subscription_status: status })
@@ -70,7 +73,6 @@ export async function POST(request) {
   return NextResponse.json({ received: true });
 }
 
-// Handle checkout session creation from frontend
 async function handleCheckoutRequest(body) {
   try {
     const supabase = createClient();
