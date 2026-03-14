@@ -5,53 +5,115 @@ import { buildGeneratePostPrompt } from "@/lib/prompts";
 
 const FREE_GENERATION_LIMIT = 3;
 
+// Mock demo voice profile
+const DEMO_VOICE_PROFILE = {
+  id: "demo-user-id",
+  user_id: "demo-user-id",
+  confidence_level: "full",
+  post_count_analyzed: 85,
+  profile_summary: "You have a conversational, vulnerability-driven style focused on actionable consulting insights with data-backed examples.",
+  traits: ["Actionable", "Data-driven", "Conversational", "Vulnerable"],
+  structural_patterns: {
+    topFormats: [
+      { type: "Hook-driven Story", avgPercentile: 85, pct: 35 },
+      { type: "Framework", avgPercentile: 78, pct: 28 },
+      { type: "Hot Take", avgPercentile: 72, pct: 22 },
+    ],
+    toneCharacteristics: ["Vulnerable", "Conversational", "Direct"],
+    commonThemes: ["Entrepreneurship", "Leadership", "Business Growth"],
+  },
+};
+
+// Mock demo posts
+const DEMO_POSTS = [
+  {
+    id: "1",
+    content: "Why most consultants underprice their services...",
+    post_type: "hook-driven-story",
+    performance_percentile: 92,
+  },
+  {
+    id: "2",
+    content: "3 frameworks that changed my consulting business...",
+    post_type: "framework",
+    performance_percentile: 88,
+  },
+  {
+    id: "3",
+    content: "Hot take: Most consultants are leaving money on the table...",
+    post_type: "hot-take",
+    performance_percentile: 75,
+  },
+];
+
 export async function POST(request) {
   try {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    // In demo mode, allow requests without authentication
+    const isDemoMode = !user;
 
     const { topic, format } = await request.json();
     if (!topic?.trim()) return NextResponse.json({ error: "Topic is required." }, { status: 400 });
 
-    // Check subscription & generation count
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("subscription_status, generation_count")
-      .eq("id", user.id)
-      .single();
+    let profile = null;
+    let voiceProfile = null;
+    let topPosts = DEMO_POSTS;
+    let generationsUsed = 0;
 
-    const isSubscribed = profile?.subscription_status === "active";
-    const generationsUsed = profile?.generation_count || 0;
+    if (user) {
+      // Real mode: fetch from database
+      const { data: dbProfile } = await supabase
+        .from("profiles")
+        .select("subscription_status, generation_count")
+        .eq("id", user.id)
+        .single();
 
-    if (!isSubscribed && generationsUsed >= FREE_GENERATION_LIMIT) {
-      return NextResponse.json({
-        error: "You've used your 3 free generations. Upgrade to continue.",
-        upgrade: true,
-        generationsUsed,
-      }, { status: 403 });
+      profile = dbProfile;
+
+      const isSubscribed = profile?.subscription_status === "active";
+      generationsUsed = profile?.generation_count || 0;
+
+      if (!isSubscribed && generationsUsed >= FREE_GENERATION_LIMIT) {
+        return NextResponse.json({
+          error: "You've used your 3 free generations. Upgrade to continue.",
+          upgrade: true,
+          generationsUsed,
+        }, { status: 403 });
+      }
+
+      // Fetch voice profile
+      const { data: dbVoiceProfile } = await supabase
+        .from("voice_profiles")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
+
+      voiceProfile = dbVoiceProfile;
+
+      if (!voiceProfile) {
+        return NextResponse.json({
+          error: "No voice profile found. Upload your archive first.",
+        }, { status: 400 });
+      }
+
+      // Fetch top posts for examples
+      const { data: dbTopPosts } = await supabase
+        .from("posts")
+        .select("content, post_type, performance_percentile")
+        .eq("user_id", user.id)
+        .order("performance_percentile", { ascending: false })
+        .limit(5);
+
+      topPosts = dbTopPosts || DEMO_POSTS;
+    } else {
+      // Demo mode: use mock data
+      console.log("🎭 DEMO MODE: Using mock voice profile and posts");
+      voiceProfile = DEMO_VOICE_PROFILE;
+      topPosts = DEMO_POSTS;
+      generationsUsed = 0;
     }
-
-    // Fetch voice profile
-    const { data: voiceProfile } = await supabase
-      .from("voice_profiles")
-      .select("*")
-      .eq("user_id", user.id)
-      .single();
-
-    if (!voiceProfile) {
-      return NextResponse.json({
-        error: "No voice profile found. Upload your archive first.",
-      }, { status: 400 });
-    }
-
-    // Fetch top posts for examples
-    const { data: topPosts } = await supabase
-      .from("posts")
-      .select("content, post_type, performance_percentile")
-      .eq("user_id", user.id)
-      .order("performance_percentile", { ascending: false })
-      .limit(5);
 
     // Build structural insight
     const patterns = voiceProfile.structural_patterns?.topFormats;
@@ -72,23 +134,27 @@ export async function POST(request) {
 
     const output = await generateWithClaude({ system, prompt });
 
-    // Save generated post
-    await supabase.from("generated_posts").insert({
-      user_id: user.id,
-      prompt: topic,
-      output,
-      format,
-    });
+    // Only save if user is authenticated
+    if (user) {
+      // Save generated post
+      await supabase.from("generated_posts").insert({
+        user_id: user.id,
+        prompt: topic,
+        output,
+        format,
+      });
 
-    // Increment generation count
-    await supabase
-      .from("profiles")
-      .update({ generation_count: generationsUsed + 1 })
-      .eq("id", user.id);
+      // Increment generation count
+      await supabase
+        .from("profiles")
+        .update({ generation_count: generationsUsed + 1 })
+        .eq("id", user.id);
+    }
 
     return NextResponse.json({
       output,
       generationsUsed: generationsUsed + 1,
+      demoMode: isDemoMode,
     });
   } catch (e) {
     console.error("Generate error:", e);

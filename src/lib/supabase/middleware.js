@@ -30,13 +30,19 @@ export async function updateSession(request) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Redirect unauthenticated users away from dashboard
+  // Check for demo mode (allow dashboard access without auth)
+  const isDemoMode = request.nextUrl.searchParams.get("demo") === "true";
+
+  // Redirect unauthenticated users away from dashboard (unless demo mode is enabled)
   if (
     !user &&
+    !isDemoMode &&
     request.nextUrl.pathname.startsWith("/dashboard")
   ) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
+    // Don't preserve query params on redirect to login
+    url.search = "";
     return NextResponse.redirect(url);
   }
 
