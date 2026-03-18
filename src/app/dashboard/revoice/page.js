@@ -5,6 +5,14 @@ import { createClient } from "@/lib/supabase/client";
 import PostCard from "@/components/ui/PostCard";
 import Spinner from "@/components/ui/Spinner";
 
+// Demo posts for unauthenticated users
+const DEMO_POSTS = [
+  { id: "demo-1", content: "I lost my biggest client last Tuesday.\n\nNot because of price. Not because of quality.\n\nBecause I forgot to reply to one email.\n\nHere\u2019s what that taught me about the real reason consultants lose clients \u2014 and it has nothing to do with your deliverables.\n\nThe relationship IS the deliverable.\n\nEvery unanswered message is a signal. Every delayed reply says \u201Cyou\u2019re not my priority.\u201D\n\nI\u2019ve since built a 24-hour reply rule into my practice. No exceptions.\n\nSix months later, retention is up 40%.", published_at: "2024-11-14", post_type: "hook-driven-story", hook_style: "personal-anecdote", performance_percentile: 95, likes: 847, comments: 93, shares: 41 },
+  { id: "demo-2", content: "Unpopular opinion: Most consultants don\u2019t have a lead gen problem.\n\nThey have a positioning problem.\n\nIf you can\u2019t explain what you do in one sentence \u2014 to your mom \u2014 you\u2019re not clear enough.\n\nClarity is the ultimate growth hack. Everything else is noise.", published_at: "2024-09-22", post_type: "hot-take", hook_style: "contrarian-claim", performance_percentile: 88, likes: 612, comments: 78, shares: 35 },
+  { id: "demo-3", content: "The framework that doubled my consulting rate in 6 months:\n\n1. Track every hour for 2 weeks \u2014 all of them\n2. Calculate your effective hourly rate (revenue \u00F7 ALL hours, not just billable)\n3. Identify the bottom 20% of tasks by rate\n4. Eliminate, delegate, or reprice those tasks\n5. Repeat quarterly\n\nMost consultants are shocked when they see the real number.\n\nThe gap is where your profit is hiding.", published_at: "2024-08-03", post_type: "framework", hook_style: "promise-of-outcome", performance_percentile: 82, likes: 534, comments: 67, shares: 52 },
+  { id: "demo-4", content: "Nobody talks about the loneliness of solo consulting.\n\nYou leave a team of 30. Suddenly it\u2019s just you and your laptop.\n\nNo watercooler. No brainstorm sessions. No one to tell you \u201Cgood job.\u201D\n\nI joined a peer mastermind group 6 months in. Changed everything.\n\nIf you\u2019re going solo, budget for community the same way you budget for software.", published_at: "2024-07-08", post_type: "hook-driven-story", hook_style: "personal-anecdote", performance_percentile: 71, likes: 198, comments: 42, shares: 16 },
+];
+
 export default function RevoicePage() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -13,6 +21,7 @@ export default function RevoicePage() {
   const [result, setResult] = useState("");
   const [revoicing, setRevoicing] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isDemoMode, setIsDemoMode] = useState(false);
 
   const supabase = createClient();
 
@@ -22,7 +31,15 @@ export default function RevoicePage() {
 
   async function loadPosts() {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+
+    if (!user) {
+      // Demo mode
+      console.log("\uD83C\uDFAD DEMO MODE: Using mock posts for revoice");
+      setIsDemoMode(true);
+      setPosts(DEMO_POSTS);
+      setLoading(false);
+      return;
+    }
 
     const { data } = await supabase
       .from("posts")
@@ -47,10 +64,14 @@ export default function RevoicePage() {
     setResult("");
 
     try {
+      const body = isDemoMode
+        ? { postContent: selectedPost.content, postType: selectedPost.post_type, postDate: selectedPost.published_at, context }
+        : { postId: selectedPost.id, context };
+
       const res = await fetch("/api/revoice", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ postId: selectedPost.id, context }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       if (data.error) {

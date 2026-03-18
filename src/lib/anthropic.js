@@ -9,98 +9,85 @@
 
 // Mock responses for demo mode
 const DEMO_RESPONSES = {
-  "story": `Here's why most consultants underprice their services:
+  "story": `I lost a $40K contract last month.
 
-The biggest mistake I made early in my career was undervaluing my work. I thought more clients = more revenue. Wrong.
+Not because of price. Not because of quality.
 
-I was charging $50/hour while competitors charged $250+. Why? Imposter syndrome.
+Because I sent a proposal that was 15 pages long.
 
-Here's what changed everything:
+The prospect told me later — she stopped reading on page 2. By the time she picked it back up, she'd already signed with someone else.
 
-1. **Your expertise has a market rate** — Not every consultant is created equal. Your results, experience, and network have value.
+Here's the thing nobody tells you about proposals. Nobody reads them. Not really.
 
-2. **Hourly pricing kills relationships** — When you're paid per hour, clients want to minimize hours. Instead, structure deals around outcomes.
+They skim the first page. They flip to the price. They make a decision based on how confident you sound — not how thorough you are.
 
-3. **Value pricing compounds** — One high-value client beats 10 low-value ones. Better margins, happier clients, sustainable business.
+I replaced my 15-page template with a 1-page scope doc. Problem, approach, timeline, price. That's it.
 
-4. **Confidence is a feature** — Charging premium rates actually increases close rates. People respect what they pay for.
+Close rate went from 30% to 62% in three months.
 
-If you're undercharging, you're doing your clients a disservice. They're leaving money on the table. You're burning out. It's a lose-lose.
+The length of your proposal is inversely proportional to your confidence in what you're selling.
 
-Start with a 50% increase. Test it. You'll be shocked at the response.
+Shorter wins. Every time.`,
 
-#Consulting #Strategy #Business`,
+  "framework": `The framework that tripled my effective hourly rate in 6 months:
 
-  "framework": `3 frameworks that transformed my consulting practice:
+1. Track every hour for 2 weeks — all of them, not just billable
+2. Calculate your real rate (total revenue divided by ALL hours worked)
+3. Find the bottom 20% of tasks by effective rate
+4. Eliminate, delegate, or reprice those tasks
+5. Repeat quarterly
 
-**1. The Discovery-to-Delivery Framework**
-- Week 1: Deep dive audit (understand their real problem)
-- Week 2-3: Strategy development (show them the path)
-- Week 4+: Implementation support (make it real)
+Most consultants are shocked when they run this exercise.
 
-This moved me from hourly billing → outcome-based pricing. Game changer.
+I was billing $200/hr but my effective rate was $47/hr. The gap was admin, scope creep, and underbidding.
 
-**2. The 90-Day Sprint**
-- Month 1: Baseline & quick wins
-- Month 2: Systemic improvements
-- Month 3: Handoff & sustainability
+That gap is where your profit is hiding.
 
-Clients see results. You build a reputation. Everyone wins.
+The fix isn't working more hours. It's being ruthless about which hours you work.
 
-**3. The Authority Ladder**
-- Free content (prove you know what you're talking about)
-- Paid courses (build audience + passive income)
-- High-ticket consulting (cherry-pick dream clients)
+Run the numbers this week. You'll never look at your calendar the same way.`,
 
-I started here and scaled to $100K clients.
+  "hot-take": `Unpopular opinion — most consultants don't have a lead gen problem.
 
-Use these frameworks and watch your business evolve.
+They have a positioning problem.
 
-#Consulting #Business #Growth`,
+If you can't explain what you do in one sentence to your mom, you're not clear enough.
 
-  "hot-take": `Hot take: Most consultants are leaving 10x revenue on the table.
+I spent two years trying every growth tactic. Webinars. Cold outreach. Referral programs. Content calendars.
 
-Not because they're bad at what they do. Because they're pricing like employees.
+None of it worked until I rewrote my positioning.
 
-You wouldn't hire a surgeon for $100/hour. You'd trust their expertise and pay what they ask. Yet we consultants constantly negotiate down.
+Old version — "I help companies optimize their operations."
 
-The irony? Clients respect what they pay for. Cheap consultants = cheap results (in their minds).
+New version — "I help B2B startups cut onboarding time in half."
 
-Raise your rates. Today. You'll close fewer deals. Your profit will triple.
+Same skills. Same person. Completely different results.
 
-That's not greed. That's business.
+Clarity is the ultimate growth hack. Everything else is noise.`,
 
-#Consulting #Mindset #Reality`,
+  "listicle": `3 things I wish I knew before going solo:
 
-  "listicle": `5 reasons you'll never reach 6 figures as a consultant:
+Your first 3 clients will come from your last employer's network. Plan for that. Don't burn bridges on the way out — those bridges are your runway.
 
-1. **You're selling time, not transformation** — Break the hourly trap. Sell outcomes instead.
+Pricing is a story, not a spreadsheet. The narrative around your rate matters more than the number. "I charge $10K for this engagement" hits different than "$150/hr."
 
-2. **You're saying yes to everything** — Wrong clients kill your brand. Be selective. Your niche is your moat.
+You'll spend 40% of your time on non-billable work. Marketing, admin, invoicing, proposals. Build that into your rate from day one or you'll wonder why you're working harder and earning less.
 
-3. **You're not building leverage** — 1:1 services cap your income. Add products, courses, or group programs.
+The consultants who struggle aren't less talented.
 
-4. **You're not visible enough** — LinkedIn is free marketing. Your ideal clients are scrolling right now. Show up.
+They're less prepared for the business side.`,
 
-5. **You're not surrounding yourself with growth** — Your network = your networth. Find people ahead of you. Learn. Scale.
+  "question": `What's the one thing you changed in your consulting practice this year that had the biggest impact?
 
-Want to hit 6 figures? Fix these five. Everything else follows.
+For me — I stopped sending proposals.
 
-#Consulting #Revenue #Growth`,
+I send 1-page scope docs instead. Problem, approach, timeline, price.
 
-  "question": `How would your consulting business change if you charged 3x as much?
+Close rate went from 30% to 65%.
 
-Think about it:
-- Fewer deals to close (less sales friction)
-- Higher-quality clients (they self-select)
-- Longer retention (skin in the game)
-- Better margins (sustainable growth)
+Simpler is almost always better. The more you add, the more reasons you give someone to say no.
 
-The only thing stopping you is the belief that you're not worth it.
-
-Are you?
-
-#Consulting #Pricing #Mindset`,
+What's yours?`,
 };
 
 export async function generateWithClaude({ system, prompt }) {
@@ -110,7 +97,40 @@ export async function generateWithClaude({ system, prompt }) {
   if (!apiKey || apiKey.includes("placeholder")) {
     console.log("🎭 DEMO MODE: Using mock response (real Gemini API key not configured)");
     
-    // Try to detect format from prompt and return relevant demo content
+    // Detect request type from system prompt and return appropriate mock
+    const sysLower = (system || "").toLowerCase();
+    
+    // ── Classification requests: return JSON array ──
+    if (sysLower.includes("classify") && sysLower.includes("quality_score")) {
+      // Count how many posts were sent by counting "--- POST" markers
+      const postCount = (prompt.match(/--- POST \d+/g) || []).length || 1;
+      const types = ["hook-driven-story", "framework", "hot-take", "listicle", "question"];
+      const hooks = ["personal-anecdote", "contrarian-claim", "data-point", "promise-of-outcome", "question"];
+      
+      const classifications = Array.from({ length: postCount }, (_, i) => ({
+        post_type: types[i % types.length],
+        hook_style: hooks[i % hooks.length],
+        // Spread scores across a realistic range so percentiles differentiate
+        quality_score: Math.round(35 + Math.random() * 55), // 35-90 range
+      }));
+      
+      return JSON.stringify(classifications);
+    }
+    
+    // ── Voice profile requests: return JSON object ──
+    if (sysLower.includes("voice profile") || sysLower.includes("style analyst")) {
+      return JSON.stringify({
+        summary: "Direct and story-driven. Favors short punchy sentences followed by one longer explanatory line. Opens with personal anecdotes or contrarian claims. Closes with a single actionable takeaway. Avoids jargon — prefers plain language even on complex B2B topics.",
+        traits: ["Personal anecdote openers", "One-line paragraphs", "No hashtags", "Direct CTAs", "Em-dash usage"],
+        sentence_patterns: "Mix of very short (3-6 word) punch lines and medium (15-20 word) explanatory sentences. Rarely exceeds 25 words.",
+        vocabulary_level: "plain",
+        tone: "Confident but conversational — like explaining to a smart friend over coffee",
+        opening_patterns: ["Personal failure or surprise", "Contrarian claim", "Specific data point"],
+        closing_patterns: ["Single actionable takeaway", "Reframe of opening hook"],
+      });
+    }
+    
+    // ── Generation requests: return canned post content ──
     let format = "story";
     if (prompt.toLowerCase().includes("framework") || prompt.toLowerCase().includes("how")) {
       format = "framework";
@@ -122,7 +142,6 @@ export async function generateWithClaude({ system, prompt }) {
       format = "question";
     }
     
-    // Add some variation by mixing in the prompt topic
     const demoResponse = DEMO_RESPONSES[format] || DEMO_RESPONSES["story"];
     return demoResponse;
   }
@@ -148,14 +167,12 @@ export async function generateWithClaude({ system, prompt }) {
 
     if (data.error) {
       console.error("Gemini API error:", data.error);
-      // Fall back to demo mode on API error
-      return DEMO_RESPONSES["story"];
+      throw new Error(`Gemini API error: ${data.error.message || "Unknown error"}`);
     }
 
     return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
   } catch (error) {
     console.error("Gemini API fetch error:", error);
-    // Fall back to demo mode on network error
-    return DEMO_RESPONSES["story"];
+    throw error;
   }
 }
