@@ -12,6 +12,8 @@ body {
   background: #0c0d12;
   color: #e4e5ea;
   font-family: "DM Sans", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Scrollbar */
@@ -40,4 +42,21 @@ body {
   to {
     transform: rotate(360deg);
   }
+}
+
+/* Mobile tap highlight removal */
+button, a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Ensure inputs don't zoom on iOS */
+@media (max-width: 768px) {
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
 }

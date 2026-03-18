@@ -22,6 +22,7 @@ export default function RevoicePage() {
   const [revoicing, setRevoicing] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isDemoMode, setIsDemoMode] = useState(false);
+  const [rating, setRating] = useState(null);
 
   const supabase = createClient();
 
@@ -62,6 +63,7 @@ export default function RevoicePage() {
     if (!selectedPost) return;
     setRevoicing(true);
     setResult("");
+    setRating(null);
 
     try {
       const body = isDemoMode
@@ -117,7 +119,7 @@ export default function RevoicePage() {
             ← Back to post list
           </button>
 
-          <div className={`grid gap-5 ${result && !revoicing ? "grid-cols-2" : "grid-cols-1"}`}>
+          <div className={`grid gap-5 ${result && !revoicing ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}>
             {/* Original */}
             <div className="bg-surface border border-border rounded-xl p-6">
               <div className="flex justify-between items-center mb-4">
@@ -155,6 +157,34 @@ export default function RevoicePage() {
                   </div>
                 </div>
                 <p className="text-sm leading-relaxed text-text-primary whitespace-pre-wrap m-0">{result}</p>
+
+                {/* Rating feedback */}
+                <div className="mt-4 pt-3.5 border-t border-border">
+                  {!rating ? (
+                    <div>
+                      <p className="text-xs text-text-dim mb-2.5">How did we do?</p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setRating("sounds_like_me")}
+                          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 cursor-pointer hover:bg-emerald-500/20 transition-all"
+                        >
+                          👍 Sounds like me
+                        </button>
+                        <button
+                          onClick={() => setRating("doesnt_sound_like_me")}
+                          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/25 cursor-pointer hover:bg-red-500/20 transition-all"
+                        >
+                          👎 Doesn't sound like me
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-xs text-text-dim">
+                      <span>{rating === "sounds_like_me" ? "👍" : "👎"}</span>
+                      <span>Thanks — this helps improve your voice matching.</span>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>

@@ -40,6 +40,7 @@ export default function GeneratePage() {
   const [voiceProfile, setVoiceProfile] = useState(null);
   const [voiceLoading, setVoiceLoading] = useState(true);
   const [isDemoMode, setIsDemoMode] = useState(false);
+  const [rating, setRating] = useState(null);
 
   const supabase = createClient();
 
@@ -88,6 +89,7 @@ export default function GeneratePage() {
     setLoading(true);
     setResult("");
     setError("");
+    setRating(null);
 
     try {
       const res = await fetch("/api/generate", {
@@ -269,6 +271,34 @@ export default function GeneratePage() {
                   </div>
                 </div>
                 <p className="text-[15px] leading-relaxed text-text-primary whitespace-pre-wrap m-0">{result}</p>
+
+                {/* Rating feedback */}
+                <div className="mt-5 pt-4 border-t border-border">
+                  {!rating ? (
+                    <div>
+                      <p className="text-xs text-text-dim mb-3">How did we do?</p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setRating("sounds_like_me")}
+                          className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 cursor-pointer hover:bg-emerald-500/20 transition-all"
+                        >
+                          👍 Sounds like me
+                        </button>
+                        <button
+                          onClick={() => setRating("doesnt_sound_like_me")}
+                          className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/25 cursor-pointer hover:bg-red-500/20 transition-all"
+                        >
+                          👎 Doesn't sound like me
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-xs text-text-dim">
+                      <span>{rating === "sounds_like_me" ? "👍" : "👎"}</span>
+                      <span>Thanks for the feedback — this helps improve voice matching.</span>
+                    </div>
+                  )}
+                </div>
               </motion.div>
             )}
           </AnimatePresence>

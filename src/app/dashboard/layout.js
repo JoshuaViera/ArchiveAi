@@ -1,5 +1,6 @@
 import Sidebar from "@/components/Sidebar";
 
+// Demo voice profile for sidebar display
 const DEMO_VOICE_PROFILE = {
   confidence_level: "full",
   post_count_analyzed: 85,
