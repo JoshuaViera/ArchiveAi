@@ -165,14 +165,17 @@ export async function generateWithClaude({ system, prompt }) {
 
     const data = await response.json();
 
-    if (data.error) {
+
+if (data.error) {
       console.error("Gemini API error:", data.error);
-      throw new Error(`Gemini API error: ${data.error.message || "Unknown error"}`);
+      // Fall back to demo response
+      return DEMO_RESPONSES["story"];
     }
 
     return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
   } catch (error) {
     console.error("Gemini API fetch error:", error);
-    throw error;
+    // Fall back to demo response
+    return DEMO_RESPONSES["story"];
   }
 }
