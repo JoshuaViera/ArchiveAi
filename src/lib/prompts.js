@@ -42,15 +42,24 @@ export function buildClassifyPostPrompt(postContent) {
 }
 
 // Batch classify — more efficient for archive processing
+// Also assigns a quality_score (1-100) since LinkedIn exports lack engagement data
 export function buildBatchClassifyPrompt(posts) {
   return {
-    system: `You classify LinkedIn posts by type and hook style. For each post, determine:
+    system: `You classify LinkedIn posts and score their content quality. For each post, determine:
 - post_type: hook-driven-story, framework, hot-take, listicle, question, or other
 - hook_style: personal-anecdote, contrarian-claim, data-point, promise-of-outcome, question, or other
+- quality_score: integer 1-100 rating the post's likely engagement potential based on:
+  * Hook strength (does the opening line stop the scroll?)
+  * Specificity (concrete numbers, names, details vs vague generalities)
+  * Structure (clear rhythm, white space, scannable format)
+  * Emotional resonance (vulnerability, surprise, relatability)
+  * Actionability (does the reader walk away with something useful?)
+  * Originality (fresh angle vs generic advice)
+  Score 80+ = exceptional, 60-79 = strong, 40-59 = average, below 40 = weak.
 
 Respond ONLY with a JSON array, one object per post, in the same order:
-[{ "post_type": "...", "hook_style": "..." }, ...]`,
-    prompt: `Classify these ${posts.length} posts:\n\n${posts.map((p, i) => `--- POST ${i + 1} ---\n${p.content}`).join("\n\n")}`,
+[{ "post_type": "...", "hook_style": "...", "quality_score": 72 }, ...]`,
+    prompt: `Classify and score these ${posts.length} posts:\n\n${posts.map((p, i) => `--- POST ${i + 1} ---\n${p.content}`).join("\n\n")}`,
   };
 }
 
@@ -72,16 +81,13 @@ RULES:
 - No hashtags, no emojis
 - Short paragraphs (1-2 sentences max)
 - Sound human, not AI
-- Match the rhythm and energy of the reference posts exactly`;
+${topPosts.length > 0 ? "- Match the rhythm and energy of the reference posts exactly" : "- Follow the voice profile traits closely since no reference posts are available"}`;
 
   const examples = topPosts.map((p) => p.content).join("\n---\n");
 
-  const prompt = `Write a LinkedIn post in the "${format}" format about: ${topic}
-
-Voice reference (top-performing posts):
-${examples}
-
-Write ONLY the post.`;
+  const prompt = topPosts.length > 0
+    ? `Write a LinkedIn post in the "${format}" format about: ${topic}\n\nVoice reference (top-performing posts):\n${examples}\n\nWrite ONLY the post.`
+    : `Write a LinkedIn post in the "${format}" format about: ${topic}\n\nNo reference posts available — rely entirely on the voice profile above.\n\nWrite ONLY the post.`;
 
   return { system, prompt };
 }

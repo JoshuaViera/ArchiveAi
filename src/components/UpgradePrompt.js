@@ -4,21 +4,28 @@ import { useState } from "react";
 
 export default function UpgradePrompt({ generationsUsed = 0, maxFree = 3 }) {
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleUpgrade = async () => {
     setLoading(true);
+    setError("");
     try {
-      const res = await fetch("/api/webhooks/stripe", {
+      const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "create_checkout" }),
       });
       const data = await res.json();
+
       if (data.url) {
         window.location.href = data.url;
+      } else if (data.alreadyActive) {
+        setError("You already have an active subscription. Refresh the page.");
+      } else {
+        setError(data.error || "Something went wrong. Please try again.");
       }
     } catch (e) {
       console.error("Upgrade failed:", e);
+      setError("Network error. Please check your connection and try again.");
     } finally {
       setLoading(false);
     }
@@ -35,6 +42,9 @@ export default function UpgradePrompt({ generationsUsed = 0, maxFree = 3 }) {
       <p className="text-sm text-text-muted mb-5 max-w-md mx-auto">
         Upgrade to unlimited post generation, re-voicing, and full archive analytics.
       </p>
+      {error && (
+        <p className="text-xs text-red-400 mb-3">{error}</p>
+      )}
       <button
         onClick={handleUpgrade}
         disabled={loading}

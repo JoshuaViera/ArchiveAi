@@ -3,36 +3,60 @@ import { createClient } from "@/lib/supabase/server";
 import { generateWithClaude } from "@/lib/anthropic";
 import { buildRevoicePrompt } from "@/lib/prompts";
 
+// Demo voice profile for unauthenticated users
+const DEMO_VOICE_PROFILE = {
+  profile_summary: "Direct and story-driven. Favors short punchy sentences followed by one longer explanatory line. Opens with personal anecdotes or contrarian claims. Closes with a single actionable takeaway.",
+  traits: ["Personal anecdote openers", "One-line paragraphs", "No hashtags", "Direct CTAs", "Em-dash usage"],
+};
+
 export async function POST(request) {
   try {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { postId, context } = await request.json();
-    if (!postId) return NextResponse.json({ error: "Post ID is required." }, { status: 400 });
+    const isDemoMode = !user;
+    const { postId, postContent, postType, postDate, context } = await request.json();
 
-    // Fetch the original post
-    const { data: originalPost } = await supabase
-      .from("posts")
-      .select("*")
-      .eq("id", postId)
-      .eq("user_id", user.id)
-      .single();
+    let originalPost = null;
+    let voiceProfile = null;
 
-    if (!originalPost) {
-      return NextResponse.json({ error: "Post not found." }, { status: 404 });
-    }
+    if (user) {
+      // Real mode: fetch from database
+      if (!postId) return NextResponse.json({ error: "Post ID is required." }, { status: 400 });
 
-    // Fetch voice profile
-    const { data: voiceProfile } = await supabase
-      .from("voice_profiles")
-      .select("*")
-      .eq("user_id", user.id)
-      .single();
+      const { data: dbPost } = await supabase
+        .from("posts")
+        .select("*")
+        .eq("id", postId)
+        .eq("user_id", user.id)
+        .single();
 
-    if (!voiceProfile) {
-      return NextResponse.json({ error: "No voice profile found." }, { status: 400 });
+      if (!dbPost) {
+        return NextResponse.json({ error: "Post not found." }, { status: 404 });
+      }
+      originalPost = dbPost;
+
+      const { data: dbVoiceProfile } = await supabase
+        .from("voice_profiles")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
+
+      if (!dbVoiceProfile) {
+        return NextResponse.json({ error: "No voice profile found." }, { status: 400 });
+      }
+      voiceProfile = dbVoiceProfile;
+    } else {
+      // Demo mode: use content passed from frontend
+      if (!postContent) return NextResponse.json({ error: "Post content is required." }, { status: 400 });
+      console.log("🎭 DEMO MODE: Using provided post content and mock voice profile");
+      originalPost = {
+        content: postContent,
+        post_type: postType || "other",
+        hook_style: "other",
+        published_at: postDate || "2024-01-01",
+      };
+      voiceProfile = DEMO_VOICE_PROFILE;
     }
 
     // Generate re-voiced version
@@ -44,22 +68,23 @@ export async function POST(request) {
 
     const output = await generateWithClaude({ system, prompt });
 
-    // Save to generated_posts with source reference
-    await supabase.from("generated_posts").insert({
-      user_id: user.id,
-      source_post_id: postId,
-      prompt: context || `Re-voice post from ${originalPost.published_at}`,
-      output,
-      format: originalPost.post_type || "revoice",
-    });
+    // Only save if user is authenticated
+    if (user) {
+      await supabase.from("generated_posts").insert({
+        user_id: user.id,
+        source_post_id: postId,
+        prompt: context || `Re-voice post from ${originalPost.published_at}`,
+        output,
+        format: originalPost.post_type || "revoice",
+      });
 
-    // Mark original as reused
-    await supabase
-      .from("posts")
-      .update({ is_reused: true })
-      .eq("id", postId);
+      await supabase
+        .from("posts")
+        .update({ is_reused: true })
+        .eq("id", postId);
+    }
 
-    return NextResponse.json({ output });
+    return NextResponse.json({ output, demoMode: isDemoMode });
   } catch (e) {
     console.error("Revoice error:", e);
     return NextResponse.json({ error: "Re-voicing failed." }, { status: 500 });
