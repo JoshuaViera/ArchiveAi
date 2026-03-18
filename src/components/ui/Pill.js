@@ -1,0 +1,22 @@
+"use client";
+
+import { motion } from "framer-motion";
+
+export default function Pill({ text, active, onClick }) {
+  return (
+    <motion.button
+      onClick={onClick}
+      className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border cursor-pointer transition-all whitespace-nowrap ${
+        active
+          ? "bg-accent/10 text-accent-light border-accent/25"
+          : "bg-transparent text-text-muted border-border hover:border-border-hi"
+      }`}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      animate={active ? { boxShadow: "0 0 12px rgba(124, 106, 239, 0.2)" } : { boxShadow: "0 0 0px rgba(0, 0, 0, 0)" }}
+      transition={{ duration: 0.2 }}
+    >
+      {text}
+    </motion.button>
+  );
+}

@@ -14,8 +14,6 @@ export default function DashboardContent({
   voiceProfile,
   formatStats,
   topPosts,
-  demoMode,
-  bootstrapMode,
 }) {
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -74,45 +72,6 @@ export default function DashboardContent({
         <h1 className="text-2xl md:text-3xl font-bold mb-2 tracking-tight">Dashboard</h1>
         <p className="text-text-muted text-sm">Your LinkedIn content intelligence at a glance.</p>
       </motion.div>
-
-      {/* Demo banner */}
-      {demoMode && (
-        <motion.div
-          variants={itemVariants}
-          className="bg-accent/10 border border-accent/25 rounded-xl px-5 py-4 mb-6 flex items-center justify-between flex-wrap gap-3"
-        >
-          <div>
-            <span className="text-sm font-semibold text-accent-light">You're viewing a demo</span>
-            <p className="text-xs text-text-muted m-0 mt-0.5">Sign up to build your own voice profile and start generating posts.</p>
-          </div>
-          <Link
-            href="/login"
-            className="px-5 py-2 rounded-lg text-xs font-bold text-white no-underline"
-            style={{ background: "linear-gradient(135deg, #7C6AEF, #9B8DF5)" }}
-          >
-            Get started
-          </Link>
-        </motion.div>
-      )}
-
-      {/* Bootstrap banner */}
-      {bootstrapMode && (
-        <motion.div
-          variants={itemVariants}
-          className="bg-amber-500/10 border border-amber-500/25 rounded-xl px-5 py-4 mb-6 flex items-center justify-between flex-wrap gap-3"
-        >
-          <div>
-            <span className="text-sm font-semibold text-amber-400">Bootstrap voice profile active</span>
-            <p className="text-xs text-text-muted m-0 mt-0.5">Upload your LinkedIn archive to upgrade to full confidence and unlock analytics.</p>
-          </div>
-          <Link
-            href="/dashboard/archive"
-            className="px-5 py-2 rounded-lg text-xs font-bold text-white no-underline bg-amber-500 hover:bg-amber-600 transition-colors"
-          >
-            Upload archive
-          </Link>
-        </motion.div>
-      )}
 
       {/* Key Stats Grid */}
       <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-3.5 mb-7 md:mb-8">

@@ -1,18 +1,23 @@
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
-import { stripe as getStripe } from "@/lib/stripe";
-import { createAdminClient } from "@/lib/supabase/server";
+import { stripe as getStripe, createCheckoutSession } from "@/lib/stripe";
+import { createAdminClient, createClient } from "@/lib/supabase/server";
 
 export async function POST(request) {
   // If Stripe isn't configured, return early
-  if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
+  if (!process.env.STRIPE_SECRET_KEY) {
     return NextResponse.json({ error: "Stripe is not configured yet." }, { status: 503 });
   }
 
   const body = await request.text();
   const headersList = headers();
-  const sig = headersList.get("stripe-signature");
 
+  const contentType = headersList.get("content-type");
+  if (contentType === "application/json") {
+    return handleCheckoutRequest(body);
+  }
+
+  const sig = headersList.get("stripe-signature");
   if (!sig) {
     return NextResponse.json({ error: "No signature" }, { status: 400 });
   }
@@ -66,4 +71,23 @@ export async function POST(request) {
   }
 
   return NextResponse.json({ received: true });
+}
+
+async function handleCheckoutRequest(body) {
+  try {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const session = await createCheckoutSession({
+      userId: user.id,
+      email: user.email,
+      returnUrl: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`,
+    });
+
+    return NextResponse.json({ url: session.url });
+  } catch (e) {
+    console.error("Checkout error:", e);
+    return NextResponse.json({ error: "Could not create checkout session." }, { status: 500 });
+  }
 }
