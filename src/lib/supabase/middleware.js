@@ -40,7 +40,7 @@ export async function updateSession(request) {
     request.nextUrl.pathname.startsWith("/dashboard")
   ) {
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
+    url.pathname = "/dashboard";
     // Don't preserve query params on redirect to login
     url.search = "";
     return NextResponse.redirect(url);
@@ -49,7 +49,7 @@ export async function updateSession(request) {
   // Redirect authenticated users away from login
   if (
     user &&
-    (request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/")
+    (request.nextUrl.pathname === "/dashboard" || request.nextUrl.pathname === "/")
   ) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
