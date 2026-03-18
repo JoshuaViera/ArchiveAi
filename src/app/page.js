@@ -12,7 +12,7 @@ export default function LandingPage() {
           <span className="font-bold text-base tracking-tight">ArchiveAI</span>
         </div>
         <Link
-          href="/login"
+           href="/dashboard"
           className="px-5 py-2 rounded-lg text-sm font-semibold bg-accent/10 text-accent-light border border-accent/25 no-underline transition-all hover:bg-accent/20"
         >
           Sign in
@@ -40,7 +40,7 @@ export default function LandingPage() {
         </p>
 
         <Link
-          href="/login"
+          href="/dashboard"
           className="px-8 py-3.5 rounded-xl text-base font-bold text-white no-underline transition-all hover:opacity-90"
           style={{ background: "linear-gradient(135deg, #7C6AEF, #9B8DF5)" }}
         >

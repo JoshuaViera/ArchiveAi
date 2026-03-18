@@ -107,7 +107,7 @@ export default function VoiceProfileCard({ voiceProfile }) {
               {topFormats.length > 0 ? (
                 topFormats.slice(0, 2).map((format, idx) => (
                   <div key={idx} className="text-xs md:text-sm font-medium text-text-primary">
-                    • {format}
+                    • {format.type || format}
                   </div>
                 ))
               ) : (
